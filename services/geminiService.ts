@@ -15,6 +15,65 @@ const NPG_PALETTE = [
   "#DC0000", // Dark Red
 ];
 
+export const extractDataFromImage = async (file: File): Promise<DataRow[]> => {
+  const base64Data = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+
+  const prompt = `
+    You are an expert data extraction assistant. 
+    Analyze the provided image. It likely contains a data table, a chart, or a spreadsheet screenshot.
+    
+    Your task:
+    1. Identify the tabular data.
+    2. Extract it into a clean JSON array of objects.
+    3. Use the first row (or chart labels) as keys (headers).
+    4. Ensure all numeric values are parsed as numbers (remove currency symbols like '$', commas, or percentage signs if needed, but keep the logic consistent).
+    5. If the image is a chart, estimate the values for each data point.
+    
+    Return ONLY the JSON array.
+  `;
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: [
+      {
+        inlineData: {
+          mimeType: file.type,
+          data: base64Data
+        }
+      },
+      { text: prompt }
+    ],
+    config: {
+      responseMimeType: "application/json"
+    }
+  });
+
+  const text = response.text;
+  if (!text) {
+    throw new Error("AI could not extract text from the image.");
+  }
+
+  try {
+    const result = JSON.parse(text);
+    if (!Array.isArray(result)) {
+      throw new Error("Extracted data is not an array");
+    }
+    return result as DataRow[];
+  } catch (e) {
+    console.error("Failed to parse image data JSON", e);
+    throw new Error("Failed to parse data from image. Please ensure the image contains a clear table or chart.");
+  }
+};
+
 export const analyzeData = async (data: DataRow[], fileName: string): Promise<AnalysisResult> => {
   // prevent token overflow by sending a representative sample and schema
   const headers = Object.keys(data[0] || {});
@@ -39,7 +98,12 @@ export const analyzeData = async (data: DataRow[], fileName: string): Promise<An
     4. **Visualizations**: Suggest 4-6 distinctive visualizations (Charts) for "Figure 1", "Figure 2", etc.
        - **Important**: Keep chart titles and descriptions in **English only** (for the chart labels).
        - Chart Titles should be concise (e.g., "Correlation between Speed and Cost").
-       - **Scatter Plots**: Prefer SCATTER for numerical correlations.
+       - **Chart Selection Guide**:
+         - **BAR/LINE/AREA**: Standard trends and comparisons.
+         - **SCATTER**: For correlations between two numerical variables.
+         - **PIE**: For part-to-whole composition (use sparingly).
+         - **BOXPLOT**: Use this when you want to show the **distribution** of a numerical variable across categories (e.g., "Salary distribution by Dept").
+         - **RADAR**: Use this for comparing multiple variables across a few entities (e.g., "Product scoring on 5 metrics").
        - **Colors**: Use the following NPG-inspired hex codes for palettes: ${JSON.stringify(NPG_PALETTE)}.
   `;
 
@@ -66,8 +130,8 @@ export const analyzeData = async (data: DataRow[], fileName: string): Promise<An
               properties: {
                 title: { type: Type.STRING, description: "Chart title in English" },
                 description: { type: Type.STRING, description: "Chart description in English" },
-                type: { type: Type.STRING, enum: ['BAR', 'LINE', 'AREA', 'PIE', 'SCATTER'] },
-                xAxisKey: { type: Type.STRING, description: "Key from data to use for X axis" },
+                type: { type: Type.STRING, enum: ['BAR', 'LINE', 'AREA', 'PIE', 'SCATTER', 'BOXPLOT', 'RADAR'] },
+                xAxisKey: { type: Type.STRING, description: "Key from data to use for X axis (Category for Box/Radar)" },
                 yAxisKeys: { 
                   type: Type.ARRAY, 
                   items: { type: Type.STRING },

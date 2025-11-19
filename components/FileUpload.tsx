@@ -47,7 +47,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUpload }) => {
       >
         <input
           type="file"
-          accept=".csv,.json,.xlsx,.xls"
+          accept=".csv,.json,.xlsx,.xls,.png,.jpg,.jpeg,.webp"
           onChange={handleInputChange}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
@@ -60,14 +60,15 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onUpload }) => {
           </div>
           
           <div>
-            <p className="text-xl font-bold text-slate-700">Drop your data file here</p>
-            <p className="text-sm text-slate-400 mt-1">Supports CSV, JSON, and Excel (XLSX/XLS)</p>
+            <p className="text-xl font-bold text-slate-700">Drop your data file or image here</p>
+            <p className="text-sm text-slate-400 mt-1">Supports CSV, Excel, JSON, and Images (Screenshots/Tables)</p>
           </div>
           
-          <div className="flex gap-2 mt-4">
+          <div className="flex gap-2 mt-4 flex-wrap justify-center">
              <span className="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded font-mono">.CSV</span>
-             <span className="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded font-mono">.JSON</span>
              <span className="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded font-mono">.XLSX</span>
+             <span className="px-2 py-1 bg-slate-100 text-slate-500 text-xs rounded font-mono">.JSON</span>
+             <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-xs rounded font-mono font-bold">.IMG</span>
           </div>
         </div>
       </div>

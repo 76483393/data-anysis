@@ -7,7 +7,9 @@ export enum ChartType {
   LINE = 'LINE',
   AREA = 'AREA',
   PIE = 'PIE',
-  SCATTER = 'SCATTER'
+  SCATTER = 'SCATTER',
+  BOXPLOT = 'BOXPLOT',
+  RADAR = 'RADAR'
 }
 
 export interface ChartConfig {

@@ -1,0 +1,5 @@
+{
+  "name": "Lumina Analytics",
+  "description": "A next-generation intelligent data visualization platform. Upload your datasets (CSV/JSON) and let our AI automatically discover insights, generate comprehensive reports, and build interactive, highly aesthetic visualizations tailored to your data's story.",
+  "requestFramePermissions": []
+}
